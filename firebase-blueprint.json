@@ -1,0 +1,60 @@
+{
+  "entities": {
+    "BudgetCategory": {
+      "title": "Budget Category",
+      "description": "Represents a budget category or pos anggaran",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Unique identifier of the category" },
+        "name": { "type": "string", "description": "Name of the category" },
+        "allocatedBudget": { "type": "number", "description": "Allocated budget amount" },
+        "spent": { "type": "number", "description": "Total spent amount under this category" },
+        "color": { "type": "string", "description": "Color associated with the category" },
+        "icon": { "type": "string", "description": "Lucide icon name" }
+      },
+      "required": ["id", "name", "allocatedBudget", "spent", "color", "icon"]
+    },
+    "Expense": {
+      "title": "Expense",
+      "description": "Represents a single expense or transaction under a category",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Unique identifier of the expense" },
+        "categoryId": { "type": "string", "description": "The category ID this expense belongs to" },
+        "amount": { "type": "number", "description": "Amount spent" },
+        "description": { "type": "string", "description": "Description of the expense" },
+        "date": { "type": "string", "description": "Date of the expense in YYYY-MM-DD or ISO format" }
+      },
+      "required": ["id", "categoryId", "amount", "description", "date"]
+    },
+    "SystemNotification": {
+      "title": "System Notification",
+      "description": "Alerts or notifications related to budget limits",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Unique identifier" },
+        "categoryId": { "type": "string", "description": "The associated category ID" },
+        "categoryName": { "type": "string", "description": "The associated category name" },
+        "type": { "type": "string", "enum": ["warning", "info", "critical", "normal"], "description": "The severity level" },
+        "message": { "type": "string", "description": "Notification message text" },
+        "timestamp": { "type": "string", "description": "ISO timestamp when generated" },
+        "isRead": { "type": "boolean", "description": "Whether the user has read the notification" }
+      },
+      "required": ["id", "categoryId", "categoryName", "type", "message", "timestamp", "isRead"]
+    }
+  },
+  "firestore": {
+    "categories": {
+      "schema": "#/entities/BudgetCategory",
+      "description": "Store of budget categories"
+    },
+    "expenses": {
+      "schema": "#/entities/Expense",
+      "description": "Store of transaction/expense items"
+    },
+    "notifications": {
+      "schema": "#/entities/SystemNotification",
+      "description": "Store of system notifications and budget alerts"
+    }
+  }
+}

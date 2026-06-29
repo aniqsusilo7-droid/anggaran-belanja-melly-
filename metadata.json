@@ -1,0 +1,8 @@
+{
+  "name": "Anggaran Belanja",
+  "description": "Aplikasi manajemen anggaran belanja rumah tangga interaktif dengan visualisasi grafik, notifikasi limit anggaran, dan simulasi sinkronisasi antar perangkat.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
