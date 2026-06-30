@@ -81,18 +81,33 @@ Berikan:
       const modelsToTry = [
         'gemini-3.5-flash',
         'gemini-3.1-flash-lite',
-        'gemini-3.1-pro-preview'
+        'gemini-3.1-pro-preview',
+        'gemini-2.5-flash',
+        'gemini-2.0-flash',
+        'gemini-1.5-flash'
       ];
 
       for (const model of modelsToTry) {
         try {
+          let url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`;
+          const headers: Record<string, string> = {
+            'Content-Type': 'application/json',
+          };
+
+          // Deteksi tipe token: Jika diawali AIzaSy maka gunakan query parameter ?key=
+          // Jika tidak, asumsikan itu adalah OAuth Access Token / Bearer Token (seperti AQ. atau ya29.)
+          const trimmedKey = apiKey.trim();
+          if (trimmedKey.startsWith('AIzaSy')) {
+            url += `?key=${trimmedKey}`;
+          } else {
+            headers['Authorization'] = `Bearer ${trimmedKey}`;
+          }
+
           response = await fetch(
-            `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
+            url,
             {
               method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-              },
+              headers: headers,
               body: JSON.stringify({
                 contents: [
                   {
