@@ -1,0 +1,45 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="bg-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#3b82f6" />
+      <stop offset="100%" stop-color="#1d4ed8" />
+    </linearGradient>
+    <linearGradient id="wallet-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ffffff" />
+      <stop offset="100%" stop-color="#f1f5f9" />
+    </linearGradient>
+    <linearGradient id="accent-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#fbbf24" />
+      <stop offset="100%" stop-color="#f59e0b" />
+    </linearGradient>
+    <filter id="shadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="6" stdDeviation="8" flood-opacity="0.15"/>
+    </filter>
+  </defs>
+  <!-- Background with rounded corners -->
+  <rect width="512" height="512" rx="112" fill="url(#bg-grad)" />
+  
+  <!-- Subtle inner glow / border -->
+  <rect x="12" y="12" width="488" height="488" rx="100" fill="none" stroke="#60a5fa" stroke-width="6" stroke-opacity="0.3" />
+
+  <!-- White Wallet Shape with drop shadow -->
+  <g filter="url(#shadow)">
+    <!-- Wallet main body -->
+    <path d="M128 180C128 155 148 135 173 135H339C364 135 384 155 384 180V320C384 345 364 365 339 365H173C148 365 128 345 128 320V180Z" fill="url(#wallet-grad)" />
+    
+    <!-- Wallet flap -->
+    <path d="M304 210H368C376.8 210 384 217.2 384 226V274C384 282.8 376.8 290 368 290H304C295.2 290 288 282.8 288 274V226C288 217.2 295.2 210 304 210Z" fill="#1e3a8a" />
+    
+    <!-- Gold coin on wallet flap -->
+    <circle cx="336" cy="250" r="14" fill="url(#accent-grad)" />
+    <circle cx="336" cy="250" r="8" fill="none" stroke="#ffffff" stroke-width="2" />
+    
+    <!-- Decorative stitching line -->
+    <path d="M152 155H336" stroke="#cbd5e1" stroke-width="4" stroke-dasharray="8,6" stroke-linecap="round" />
+    <path d="M152 345H336" stroke="#cbd5e1" stroke-width="4" stroke-dasharray="8,6" stroke-linecap="round" />
+  </g>
+
+  <!-- Growing graph line coming out of the wallet -->
+  <path d="M160 290 L220 230 L280 260 L350 160" fill="none" stroke="url(#accent-grad)" stroke-width="12" stroke-linecap="round" stroke-linejoin="round" filter="url(#shadow)" />
+  <polygon points="350,160 320,165 345,190" fill="url(#accent-grad)" />
+</svg>

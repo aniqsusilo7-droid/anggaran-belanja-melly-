@@ -29,12 +29,131 @@ import SyncPanel from './components/SyncPanel';
 import AiAnalysisPanel from './components/AiAnalysisPanel';
 import LucideIcon from './components/LucideIcon';
 
+const THEMES = [
+  {
+    id: 'default',
+    name: 'Default Slate',
+    accentColor: 'blue-600',
+    bgMain: 'bg-slate-50',
+    bgHeader: 'bg-white',
+    borderHeader: 'border-slate-200',
+    textMain: 'text-slate-800',
+    textMuted: 'text-slate-500',
+    textTitle: 'text-slate-900',
+    bgCard: 'bg-white',
+    borderCard: 'border-slate-200',
+    bgBadge: 'bg-slate-100',
+    accentBg: 'bg-blue-600 hover:bg-blue-700 text-white',
+    accentText: 'text-blue-600',
+    bgNav: 'bg-white border-slate-200',
+    isDark: false,
+    navActive: 'text-blue-600 bg-blue-50/70 font-semibold',
+    navInactive: 'text-slate-500 hover:text-slate-800 hover:bg-slate-50/50'
+  },
+  {
+    id: 'midnight',
+    name: 'Midnight Ocean',
+    accentColor: 'teal-500',
+    bgMain: 'bg-slate-950',
+    bgHeader: 'bg-slate-900',
+    borderHeader: 'border-slate-800',
+    textMain: 'text-slate-200',
+    textMuted: 'text-slate-400',
+    textTitle: 'text-white',
+    bgCard: 'bg-slate-900',
+    borderCard: 'border-slate-800',
+    bgBadge: 'bg-slate-800',
+    accentBg: 'bg-teal-500 hover:bg-teal-600 text-slate-950',
+    accentText: 'text-teal-400',
+    bgNav: 'bg-slate-900 border-slate-800',
+    isDark: true,
+    navActive: 'text-teal-400 bg-teal-950/70 font-semibold',
+    navInactive: 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
+  },
+  {
+    id: 'forest',
+    name: 'Warm Forest',
+    accentColor: 'emerald-600',
+    bgMain: 'bg-emerald-50/30',
+    bgHeader: 'bg-emerald-900',
+    borderHeader: 'border-emerald-800',
+    textMain: 'text-stone-800',
+    textMuted: 'text-stone-500',
+    textTitle: 'text-white',
+    bgCard: 'bg-white',
+    borderCard: 'border-emerald-100',
+    bgBadge: 'bg-emerald-100/50',
+    accentBg: 'bg-emerald-600 hover:bg-emerald-700 text-white',
+    accentText: 'text-emerald-700',
+    bgNav: 'bg-emerald-900 border-emerald-800',
+    isDark: false,
+    navActive: 'text-white bg-emerald-800/80 font-semibold',
+    navInactive: 'text-emerald-200 hover:text-white hover:bg-emerald-800/40'
+  },
+  {
+    id: 'lavender',
+    name: 'Cosmic Lavender',
+    accentColor: 'violet-500',
+    bgMain: 'bg-zinc-950',
+    bgHeader: 'bg-purple-950',
+    borderHeader: 'border-purple-900',
+    textMain: 'text-zinc-200',
+    textMuted: 'text-zinc-400',
+    textTitle: 'text-white',
+    bgCard: 'bg-zinc-900',
+    borderCard: 'border-purple-950',
+    bgBadge: 'bg-purple-900/40',
+    accentBg: 'bg-violet-500 hover:bg-violet-600 text-white',
+    accentText: 'text-violet-400',
+    bgNav: 'bg-purple-950 border-purple-900',
+    isDark: true,
+    navActive: 'text-violet-300 bg-purple-900/50 font-semibold',
+    navInactive: 'text-purple-200 hover:text-white hover:bg-purple-900/20'
+  },
+  {
+    id: 'sunset',
+    name: 'Sunset Rose',
+    accentColor: 'rose-500',
+    bgMain: 'bg-rose-50/40',
+    bgHeader: 'bg-rose-500',
+    borderHeader: 'border-rose-600',
+    textMain: 'text-rose-950',
+    textMuted: 'text-rose-700/60',
+    textTitle: 'text-white',
+    bgCard: 'bg-white',
+    borderCard: 'border-rose-100',
+    bgBadge: 'bg-rose-100/50',
+    accentBg: 'bg-rose-500 hover:bg-rose-600 text-white',
+    accentText: 'text-rose-600',
+    bgNav: 'bg-rose-500 border-rose-600',
+    isDark: false,
+    navActive: 'text-white bg-rose-600/80 font-semibold',
+    navInactive: 'text-rose-100 hover:text-white hover:bg-rose-600/40'
+  }
+];
+
 export default function App() {
   // --- Core State ---
   const [categories, setCategories] = useState<BudgetCategory[]>([]);
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [notifications, setNotifications] = useState<SystemNotification[]>([]);
   
+  // --- UI/Theme State ---
+  const [currentTheme, setCurrentTheme] = useState<string>(() => localStorage.getItem('app_theme') || 'default');
+  
+  const theme = useMemo(() => {
+    return THEMES.find(t => t.id === currentTheme) || THEMES[0];
+  }, [currentTheme]);
+
+  useEffect(() => {
+    localStorage.setItem('app_theme', currentTheme);
+    if (theme.isDark) {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+  }, [currentTheme, theme]);
+
   // --- UI/Navigation State ---
   const [activeMonth, setActiveMonth] = useState<string>(new Date().toISOString().substring(0, 7)); // 'YYYY-MM'
   const [activeTab, setActiveTab] = useState<'dashboard' | 'transactions' | 'analytics' | 'sync' | 'ai'>('dashboard');
@@ -606,8 +725,38 @@ export default function App() {
     <div className="h-screen w-screen bg-slate-100 sm:py-6 px-0 sm:px-4 font-sans text-slate-800 flex flex-col items-center justify-center overflow-hidden">
       
       {/* Mobile Frame Envelope Wrapper (Desktop displays as beautiful mobile phone simulation, Mobile displays edge-to-edge with sticky header/tabs) */}
-      <div className="w-full max-w-md sm:max-w-xl bg-slate-50 h-full sm:h-[820px] sm:max-h-full sm:rounded-[36px] sm:shadow-2xl sm:border-[8px] sm:border-slate-900 relative overflow-hidden flex flex-col justify-between">
+      <div className={`w-full max-w-md sm:max-w-xl ${theme.bgMain} ${theme.textMain} h-full sm:h-[820px] sm:max-h-full sm:rounded-[36px] sm:shadow-2xl sm:border-[8px] sm:border-slate-900 relative overflow-hidden flex flex-col justify-between transition-colors duration-300`}>
         
+        {/* Theme Selector Bar (Paling Atas) */}
+        <div className="bg-slate-900 text-slate-200 py-2.5 px-5 flex items-center justify-between text-xs shrink-0 select-none border-b border-slate-800 z-40">
+          <div className="flex items-center gap-2 font-semibold">
+            <LucideIcon name="Palette" size={14} className="text-blue-400" />
+            <span>Tema Aplikasi:</span>
+          </div>
+          <div className="flex items-center gap-2">
+            {THEMES.map((t) => (
+              <button
+                key={t.id}
+                onClick={() => setCurrentTheme(t.id)}
+                className={`w-6.5 h-6.5 rounded-full flex items-center justify-center border-2 transition-all duration-200 hover:scale-110 active:scale-95 ${
+                  currentTheme === t.id ? 'border-white scale-110 shadow-lg' : 'border-slate-700 hover:border-slate-500'
+                }`}
+                title={t.name}
+                style={{
+                  background: t.id === 'default' ? '#2563eb' : 
+                              t.id === 'midnight' ? '#14b8a6' : 
+                              t.id === 'forest' ? '#059669' : 
+                              t.id === 'lavender' ? '#7c3aed' : '#e11d48'
+                }}
+              >
+                {currentTheme === t.id && (
+                  <LucideIcon name="Check" size={11} className="text-white font-black" />
+                )}
+              </button>
+            ))}
+          </div>
+        </div>
+
         {/* Android Top StatusBar Simulation (Only visible on screens showing frame) */}
         <div className="hidden sm:flex bg-slate-900 text-white text-[11px] px-6 py-2.5 items-center justify-between font-mono">
           <div className="flex items-center gap-1.5">
@@ -624,16 +773,16 @@ export default function App() {
         <div className="flex-1 flex flex-col min-h-0">
           
           {/* Main Top Header Navigation */}
-          <header className="bg-white border-b border-slate-200 px-5 py-4 flex items-center justify-between relative shrink-0">
+          <header className={`${theme.bgHeader} border-b ${theme.borderHeader} px-5 py-4 flex items-center justify-between relative shrink-0 transition-colors duration-300`}>
             <div className="flex items-center gap-3">
-              <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center text-white shrink-0">
+              <div className={`w-8 h-8 ${theme.id === 'default' ? 'bg-blue-600' : theme.id === 'midnight' ? 'bg-teal-500 text-slate-950' : theme.id === 'forest' ? 'bg-emerald-600' : theme.id === 'lavender' ? 'bg-violet-600' : 'bg-rose-600'} rounded-lg flex items-center justify-center text-white shrink-0`}>
                 <LucideIcon name="Wallet" size={18} />
               </div>
               <div>
-                <h1 className="text-base font-bold tracking-tight text-slate-900 leading-tight capitalize">
+                <h1 className={`text-base font-bold tracking-tight ${theme.textTitle} leading-tight capitalize`}>
                   melly finance
                 </h1>
-                <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Juni 2026</p>
+                <p className={`text-[10px] ${theme.id === 'default' ? 'text-slate-400' : 'opacity-70'} font-bold uppercase tracking-wider`}>Juni 2026</p>
               </div>
             </div>
 
@@ -643,7 +792,11 @@ export default function App() {
               <div className="relative">
                 <button
                   onClick={() => setIsNotifOpen(!isNotifOpen)}
-                  className="p-2.5 hover:bg-slate-50 text-slate-600 hover:text-slate-900 rounded-xl transition-all relative border border-slate-100 shadow-sm"
+                  className={`p-2.5 rounded-xl transition-all relative border shadow-sm ${
+                    theme.isDark 
+                      ? 'hover:bg-slate-800 text-slate-300 hover:text-white border-slate-800' 
+                      : 'hover:bg-slate-100 text-slate-600 hover:text-slate-900 border-slate-200'
+                  }`}
                   id="btn-trigger-notification-center"
                 >
                   <LucideIcon name="Bell" size={18} />
@@ -774,7 +927,7 @@ export default function App() {
               <div className="space-y-6">
                 
                 {/* Month Selector */}
-                <div className="flex items-center justify-between bg-white rounded-2xl border border-slate-200 p-3 shadow-sm">
+                <div className={`flex items-center justify-between ${theme.bgCard} rounded-2xl border ${theme.borderCard} p-3 shadow-sm transition-colors duration-300`}>
                   <button 
                     onClick={() => {
                       const [year, month] = activeMonth.split('-').map(Number);
@@ -782,11 +935,11 @@ export default function App() {
                       d.setMonth(d.getMonth() - 1);
                       setActiveMonth(`${d.getFullYear()}-${(d.getMonth() + 1).toString().padStart(2, '0')}`);
                     }}
-                    className="p-2 text-slate-400 hover:text-slate-700 hover:bg-slate-50 rounded-xl transition-colors"
+                    className={`p-2 ${theme.isDark ? 'text-slate-400 hover:text-white hover:bg-slate-800' : 'text-slate-400 hover:text-slate-700 hover:bg-slate-50'} rounded-xl transition-colors`}
                   >
                     <LucideIcon name="ChevronLeft" size={20} />
                   </button>
-                  <h3 className="font-bold text-slate-700 text-sm">
+                  <h3 className={`font-bold ${theme.isDark ? 'text-slate-200' : 'text-slate-700'} text-sm`}>
                     {new Date(parseInt(activeMonth.split('-')[0]), parseInt(activeMonth.split('-')[1]) - 1, 1).toLocaleDateString('id-ID', { month: 'long', year: 'numeric' })}
                   </h3>
                   <button 
@@ -796,18 +949,18 @@ export default function App() {
                       d.setMonth(d.getMonth() + 1);
                       setActiveMonth(`${d.getFullYear()}-${(d.getMonth() + 1).toString().padStart(2, '0')}`);
                     }}
-                    className="p-2 text-slate-400 hover:text-slate-700 hover:bg-slate-50 rounded-xl transition-colors"
+                    className={`p-2 ${theme.isDark ? 'text-slate-400 hover:text-white hover:bg-slate-800' : 'text-slate-400 hover:text-slate-700 hover:bg-slate-50'} rounded-xl transition-colors`}
                   >
                     <LucideIcon name="ChevronRight" size={20} />
                   </button>
                 </div>
 
                 {/* Total Balance / Overall Header Card */}
-                <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm">
+                <div className={`${theme.bgCard} rounded-2xl border ${theme.borderCard} p-5 shadow-sm transition-colors duration-300`}>
                   <div className="flex justify-between items-start mb-3">
                     <div>
                       <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Total Pengeluaran Bulan Ini</p>
-                      <h2 className="text-3xl font-black text-slate-900 mt-1">{formatRupiah(totalSpent)}</h2>
+                      <h2 className={`text-3xl font-black ${theme.isDark ? 'text-white' : 'text-slate-900'} mt-1`}>{formatRupiah(totalSpent)}</h2>
                     </div>
                     <div className="text-right">
                       <span className={`text-xs font-bold px-2.5 py-1 rounded-full ${totalSpent > totalBudget ? 'bg-rose-50 text-rose-700 border border-rose-100' : 'bg-emerald-50 text-emerald-700 border border-emerald-100'} border`}>
@@ -816,16 +969,16 @@ export default function App() {
                     </div>
                   </div>
                   
-                  <p className="text-xs text-slate-500">
-                    Total Plafon Anggaran: <span className="font-semibold text-slate-700">{formatRupiah(totalBudget)}</span>
+                  <p className={`text-xs ${theme.isDark ? 'text-slate-400' : 'text-slate-500'}`}>
+                    Total Plafon Anggaran: <span className={`font-semibold ${theme.isDark ? 'text-slate-200' : 'text-slate-700'}`}>{formatRupiah(totalBudget)}</span>
                   </p>
 
-                  <div className="w-full bg-slate-100 h-2.5 rounded-full mt-4 overflow-hidden flex">
+                  <div className="w-full bg-slate-100 dark:bg-slate-800 h-2.5 rounded-full mt-4 overflow-hidden flex">
                     <motion.div
                       initial={{ width: 0 }}
                       animate={{ width: `${Math.min(totalBudget > 0 ? (totalSpent / totalBudget) * 100 : 0, 100)}%` }}
                       transition={{ duration: 0.5, ease: 'easeOut' }}
-                      className={`h-full ${totalSpent > totalBudget ? 'bg-rose-500' : 'bg-blue-500'}`}
+                      className={`h-full ${totalSpent > totalBudget ? 'bg-rose-500' : theme.accentBg}`}
                     />
                   </div>
 
@@ -840,11 +993,11 @@ export default function App() {
 
                  {/* Dashboard Action Header: Create Pos / Create Transaksi */}
                 <div className="flex flex-row items-center justify-between gap-2">
-                  <h3 className="font-extrabold text-slate-800 text-xs sm:text-sm tracking-tight uppercase shrink-0">Pos Anggaran Anda</h3>
+                  <h3 className={`font-extrabold ${theme.isDark ? 'text-slate-200' : 'text-slate-800'} text-xs sm:text-sm tracking-tight uppercase shrink-0`}>Pos Anggaran Anda</h3>
                   <div className="flex gap-1.5 shrink-0">
                     <button
                       onClick={() => setIsAddCatOpen(true)}
-                      className="inline-flex items-center gap-1 bg-white hover:bg-slate-50 text-slate-800 border border-slate-200 text-[11px] sm:text-xs font-bold py-1.5 px-2.5 rounded-xl transition-all shadow-sm"
+                      className={`inline-flex items-center gap-1 ${theme.bgCard} hover:opacity-90 ${theme.isDark ? 'text-slate-200 border-slate-800' : 'text-slate-800 border-slate-200'} border text-[11px] sm:text-xs font-bold py-1.5 px-2.5 rounded-xl transition-all shadow-sm`}
                       id="btn-add-new-category"
                     >
                       <LucideIcon name="Plus" size={12} />
@@ -855,7 +1008,7 @@ export default function App() {
                         setSelectedCatForExpense('');
                         setIsAddExpenseOpen(true);
                       }}
-                      className="inline-flex items-center gap-1 bg-blue-600 hover:bg-blue-700 text-white text-[11px] sm:text-xs font-bold py-1.5 px-2.5 rounded-xl transition-all shadow-md"
+                      className={`inline-flex items-center gap-1 ${theme.accentBg} text-[11px] sm:text-xs font-bold py-1.5 px-2.5 rounded-xl transition-all shadow-md`}
                       id="btn-add-new-expense"
                     >
                       <LucideIcon name="Coins" size={12} />
@@ -866,10 +1019,10 @@ export default function App() {
 
                 {/* Category Cards List */}
                 {currentMonthCategories.length === 0 ? (
-                  <div className="bg-white rounded-2xl p-10 border border-dashed border-slate-200 text-center text-slate-400 space-y-3">
+                  <div className={`${theme.bgCard} rounded-2xl p-10 border border-dashed ${theme.borderCard} text-center text-slate-400 space-y-3`}>
                     <LucideIcon name="Wallet" size={32} className="mx-auto text-slate-300" />
                     <div>
-                      <p className="font-bold text-slate-600 text-sm">Belum Ada Pos Anggaran Bulan Ini</p>
+                      <p className={`font-bold ${theme.isDark ? 'text-slate-200' : 'text-slate-600'} text-sm`}>Belum Ada Pos Anggaran Bulan Ini</p>
                       <p className="text-xs text-slate-400 max-w-[240px] mx-auto mt-1">Buat pos anggaran pertama Anda atau salin dari bulan sebelumnya.</p>
                     </div>
                     <div className="flex flex-col sm:flex-row justify-center gap-2">
@@ -929,7 +1082,7 @@ export default function App() {
               <div className="space-y-6" id="transactions-tab">
                 <div className="flex items-center justify-between gap-4">
                   <div>
-                    <h3 className="font-extrabold text-slate-800 text-xs sm:text-sm uppercase tracking-tight">Riwayat Belanja</h3>
+                    <h3 className={`font-extrabold ${theme.isDark ? 'text-slate-200' : 'text-slate-800'} text-xs sm:text-sm uppercase tracking-tight`}>Riwayat Belanja</h3>
                     <p className="text-[10px] sm:text-xs text-slate-400 mt-0.5">Daftar pengeluaran anggaran rumah tangga</p>
                   </div>
 
@@ -937,7 +1090,7 @@ export default function App() {
                     <select
                       value={txFilterCategory}
                       onChange={(e) => setTxFilterCategory(e.target.value)}
-                      className="text-xs border border-slate-200 bg-white rounded-xl px-2 py-1.5 focus:outline-none focus:border-blue-500 text-slate-700"
+                      className={`text-xs border ${theme.borderCard} ${theme.bgCard} ${theme.isDark ? 'text-slate-200' : 'text-slate-700'} rounded-xl px-2 py-1.5 focus:outline-none focus:border-blue-500`}
                     >
                       <option value="all">Semua Pos</option>
                       {currentMonthCategories.map(cat => (
@@ -949,7 +1102,7 @@ export default function App() {
                         setSelectedCatForExpense(txFilterCategory === 'all' ? '' : txFilterCategory);
                         setIsAddExpenseOpen(true);
                       }}
-                      className="inline-flex items-center gap-1 bg-blue-600 hover:bg-blue-700 text-white text-[11px] sm:text-xs font-bold py-1.5 px-2.5 rounded-xl transition-all shadow-md shrink-0"
+                      className={`inline-flex items-center gap-1 ${theme.accentBg} text-[11px] sm:text-xs font-bold py-1.5 px-2.5 rounded-xl transition-all shadow-md shrink-0`}
                     >
                       <LucideIcon name="PlusCircle" size={12} />
                       Catat
@@ -959,16 +1112,16 @@ export default function App() {
 
                 {/* List Table of transactions */}
                 {currentMonthExpenses.filter(e => txFilterCategory === 'all' || e.categoryId === txFilterCategory).length === 0 ? (
-                  <div className="bg-white rounded-2xl p-10 border border-dashed border-slate-200 text-center text-slate-400 space-y-3">
+                  <div className={`${theme.bgCard} rounded-2xl p-10 border border-dashed ${theme.borderCard} text-center text-slate-400 space-y-3`}>
                     <LucideIcon name="Calendar" size={32} className="mx-auto text-slate-300" />
                     <div>
-                      <p className="font-bold text-slate-600 text-sm">Belum Ada Transaksi Belanja</p>
+                      <p className={`font-bold ${theme.isDark ? 'text-slate-200' : 'text-slate-600'} text-sm`}>Belum Ada Transaksi Belanja</p>
                       <p className="text-xs text-slate-400 max-w-[240px] mx-auto mt-1">Belanja yang Anda catat akan muncul di sini.</p>
                     </div>
                   </div>
                 ) : (
-                  <div className="bg-white rounded-2xl border border-slate-100 overflow-hidden shadow-sm">
-                    <div className="divide-y divide-slate-50">
+                  <div className={`${theme.bgCard} rounded-2xl border ${theme.isDark ? 'border-slate-800' : 'border-slate-100'} overflow-hidden shadow-sm`}>
+                    <div className={`divide-y ${theme.isDark ? 'divide-slate-800' : 'divide-slate-50'}`}>
                       {currentMonthExpenses
                         .filter(e => txFilterCategory === 'all' || e.categoryId === txFilterCategory)
                         .map((exp) => {
@@ -1002,19 +1155,19 @@ export default function App() {
                             </div>
 
                             <div className="flex items-center gap-3">
-                              <span className="text-xs font-black text-slate-800">
+                              <span className={`text-xs font-black ${theme.isDark ? 'text-slate-200' : 'text-slate-800'}`}>
                                 -{formatRupiah(exp.amount)}
                               </span>
                               <button
                                 onClick={() => handleEditExpense(exp)}
-                                className="text-slate-300 hover:text-blue-500 p-1.5 rounded-lg hover:bg-slate-50 transition-colors"
+                                className={`text-slate-400 hover:text-blue-500 p-1.5 rounded-lg ${theme.isDark ? 'hover:bg-slate-800' : 'hover:bg-slate-50'} transition-colors`}
                                 title="Ubah catatan"
                               >
                                 <LucideIcon name="Pencil" size={14} />
                               </button>
                               <button
                                 onClick={() => handleDeleteExpense(exp.id)}
-                                className="text-slate-300 hover:text-rose-500 p-1.5 rounded-lg hover:bg-slate-50 transition-colors"
+                                className={`text-slate-400 hover:text-rose-500 p-1.5 rounded-lg ${theme.isDark ? 'hover:bg-slate-800' : 'hover:bg-slate-50'} transition-colors`}
                                 title="Hapus catatan"
                               >
                                 <LucideIcon name="Trash2" size={14} />
@@ -1051,12 +1204,12 @@ export default function App() {
         </div>
 
         {/* Persistent Elegant Bottom Tab Bar for Mobile Simulation */}
-        <nav className="bg-white border-t border-slate-200 py-2 px-4 flex items-center justify-around relative z-30 shrink-0">
+        <nav className={`${theme.id === 'default' ? 'bg-white' : theme.bgHeader} border-t ${theme.borderHeader} py-2 px-4 flex items-center justify-around relative z-30 shrink-0 transition-colors duration-300`}>
           {/* Dashboard Tab Button */}
           <button
             onClick={() => setActiveTab('dashboard')}
             className={`flex flex-col items-center gap-1 py-1.5 px-3 rounded-xl transition-all ${
-              activeTab === 'dashboard' ? 'text-blue-600 bg-blue-50/70 font-semibold' : 'text-slate-500 hover:text-slate-800 hover:bg-slate-50/50'
+              activeTab === 'dashboard' ? theme.navActive : theme.navInactive
             }`}
             id="tab-btn-dashboard"
           >
@@ -1068,7 +1221,7 @@ export default function App() {
           <button
             onClick={() => setActiveTab('transactions')}
             className={`flex flex-col items-center gap-1 py-1.5 px-3 rounded-xl transition-all ${
-              activeTab === 'transactions' ? 'text-blue-600 bg-blue-50/70 font-semibold' : 'text-slate-500 hover:text-slate-800 hover:bg-slate-50/50'
+              activeTab === 'transactions' ? theme.navActive : theme.navInactive
             }`}
             id="tab-btn-transactions"
           >
@@ -1080,7 +1233,7 @@ export default function App() {
           <button
             onClick={() => setActiveTab('analytics')}
             className={`flex flex-col items-center gap-1 py-1.5 px-3 rounded-xl transition-all ${
-              activeTab === 'analytics' ? 'text-blue-600 bg-blue-50/70 font-semibold' : 'text-slate-500 hover:text-slate-800 hover:bg-slate-50/50'
+              activeTab === 'analytics' ? theme.navActive : theme.navInactive
             }`}
             id="tab-btn-analytics"
           >
@@ -1092,7 +1245,7 @@ export default function App() {
           <button
             onClick={() => setActiveTab('sync')}
             className={`flex flex-col items-center gap-1 py-1.5 px-3 rounded-xl transition-all ${
-              activeTab === 'sync' ? 'text-blue-600 bg-blue-50/70 font-semibold' : 'text-slate-500 hover:text-slate-800 hover:bg-slate-50/50'
+              activeTab === 'sync' ? theme.navActive : theme.navInactive
             }`}
             id="tab-btn-sync"
           >
@@ -1104,7 +1257,7 @@ export default function App() {
           <button
             onClick={() => setActiveTab('ai')}
             className={`flex flex-col items-center gap-1 py-1.5 px-3 rounded-xl transition-all ${
-              activeTab === 'ai' ? 'text-indigo-600 bg-indigo-50/70 font-semibold' : 'text-slate-500 hover:text-slate-800 hover:bg-slate-50/50'
+              activeTab === 'ai' ? theme.navActive : theme.navInactive
             }`}
             id="tab-btn-ai"
           >
