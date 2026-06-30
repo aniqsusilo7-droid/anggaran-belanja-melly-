@@ -21,10 +21,9 @@ export default function AiAnalysisPanel({ categories, expenses }: AiAnalysisPane
     if (savedKey) {
       setApiKey(savedKey);
     } else {
-      const envKey = ((import.meta as any).env?.VITE_GEMINI_API_KEY || '') as string;
-      if (envKey) {
-        setApiKey(envKey);
-      }
+      const defaultKey = 'AQ.Ab8RN6LUI6Il-MwiO9SJ05mx7EG2Z6oA95m8ViNnEnB5pA4MSA';
+      setApiKey(defaultKey);
+      localStorage.setItem('user_gemini_api_key', defaultKey);
     }
   }, []);
 
@@ -162,11 +161,11 @@ Berikan:
           <label className="block text-xs font-bold text-slate-700 mb-2">Google Gemini API Key</label>
           <div className="flex gap-2">
             <input
-              type="password"
+              type="text"
               value={apiKey}
               onChange={handleSaveKey}
-              placeholder="AIzaSy..."
-              className="flex-1 text-sm bg-white border border-slate-200 rounded-lg px-3 py-2 focus:outline-none focus:border-indigo-500"
+              placeholder="Masukkan API Key Gemini..."
+              className="flex-1 text-sm bg-white border border-slate-200 rounded-lg px-3 py-2 focus:outline-none focus:border-indigo-500 font-mono text-slate-800"
             />
             <button
               onClick={generateAnalysis}
