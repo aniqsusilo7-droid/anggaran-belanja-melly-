@@ -128,7 +128,7 @@ export default function BudgetCategoryCard({
               title="Ubah Kategori"
               id={`btn-edit-${category.id}`}
             >
-              <LucideIcon name="Edit2" size={16} />
+              <LucideIcon name="Pencil" size={16} />
             </button>
             <button
               onClick={() => onDeleteCategory(category.id)}

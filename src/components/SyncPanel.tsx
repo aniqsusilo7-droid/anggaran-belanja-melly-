@@ -21,9 +21,14 @@ export default function SyncPanel({ onTriggerSync, categoriesCount, expensesCoun
       const now = new Date();
       setLastSyncTime(now.toLocaleTimeString('id-ID'));
       setSyncMessage('Sinkronisasi cloud berhasil! Seluruh data anggaran dan catatan belanja Anda telah diperbarui dari Firebase.');
-    } catch (error) {
+    } catch (error: any) {
       console.error(error);
-      setSyncMessage('Sinkronisasi gagal. Pastikan Anda memiliki koneksi internet yang stabil.');
+      const errMsg = error?.message || String(error);
+      if (errMsg.toLowerCase().includes('permission') || errMsg.toLowerCase().includes('caller') || errMsg.toLowerCase().includes('unauthorized')) {
+        setSyncMessage('Sinkronisasi gagal karena masalah izin akses Firebase (The caller does not have permission). Harap pastikan hak akses aturan (security rules) database Firestore diaktifkan.');
+      } else {
+        setSyncMessage('Sinkronisasi gagal. Pastikan Anda memiliki koneksi internet yang stabil.');
+      }
     } finally {
       setIsSyncing(false);
     }

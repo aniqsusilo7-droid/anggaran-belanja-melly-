@@ -1,6 +1,6 @@
 import { useState, FormEvent, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { BudgetCategory } from '../types';
+import { BudgetCategory, Expense } from '../types';
 import { formatRupiah } from '../utils/budgetHelpers';
 import LucideIcon from './LucideIcon';
 
@@ -10,6 +10,8 @@ interface ExpenseModalProps {
   categories: BudgetCategory[];
   preSelectedCategoryId?: string;
   onAddExpense: (categoryId: string, amount: number, description: string, date: string) => void;
+  onUpdateExpense?: (expenseId: string, categoryId: string, amount: number, description: string, date: string) => void;
+  initialExpense?: Expense | null;
 }
 
 export default function ExpenseModal({
@@ -17,7 +19,9 @@ export default function ExpenseModal({
   onClose,
   categories,
   preSelectedCategoryId = '',
-  onAddExpense
+  onAddExpense,
+  onUpdateExpense,
+  initialExpense = null
 }: ExpenseModalProps) {
   const [categoryId, setCategoryId] = useState(preSelectedCategoryId || (categories[0]?.id || ''));
   const [amountStr, setAmountStr] = useState('');
@@ -27,13 +31,20 @@ export default function ExpenseModal({
 
   useEffect(() => {
     if (isOpen) {
-      setCategoryId(preSelectedCategoryId || (categories[0]?.id || ''));
-      setAmountStr('');
-      setDescription('');
-      setDate(new Date().toISOString().split('T')[0]);
+      if (initialExpense) {
+        setCategoryId(initialExpense.categoryId);
+        setAmountStr(initialExpense.amount.toString());
+        setDescription(initialExpense.description);
+        setDate(initialExpense.date);
+      } else {
+        setCategoryId(preSelectedCategoryId || (categories[0]?.id || ''));
+        setAmountStr('');
+        setDescription('');
+        setDate(new Date().toISOString().split('T')[0]);
+      }
       setError('');
     }
-  }, [isOpen, preSelectedCategoryId, categories]);
+  }, [isOpen, preSelectedCategoryId, categories, initialExpense]);
 
   // Handle preset clicks
   const applyPreset = (val: number) => {
@@ -60,7 +71,11 @@ export default function ExpenseModal({
       return;
     }
 
-    onAddExpense(categoryId, amount, description, date);
+    if (initialExpense && onUpdateExpense) {
+      onUpdateExpense(initialExpense.id, categoryId, amount, description, date);
+    } else {
+      onAddExpense(categoryId, amount, description, date);
+    }
     
     // Reset state
     setAmountStr('');
@@ -100,8 +115,12 @@ export default function ExpenseModal({
             {/* Header */}
             <div className="px-6 pb-4 pt-2 sm:pt-6 border-b border-slate-50 flex justify-between items-center">
               <div>
-                <h3 className="text-lg font-bold text-slate-800">Catat Pengeluaran Baru</h3>
-                <p className="text-xs text-slate-400 mt-0.5">Catat setiap pengeluaran dari pos anggaran Anda</p>
+                <h3 className="text-lg font-bold text-slate-800">
+                  {initialExpense ? 'Edit Catatan Pengeluaran' : 'Catat Pengeluaran Baru'}
+                </h3>
+                <p className="text-xs text-slate-400 mt-0.5">
+                  {initialExpense ? 'Perbarui rincian belanja Anda' : 'Catat setiap pengeluaran dari pos anggaran Anda'}
+                </p>
               </div>
               <button
                 onClick={onClose}
@@ -224,14 +243,14 @@ export default function ExpenseModal({
                   <div className="flex justify-between font-medium">
                     <span>Setelah Belanja Ini:</span>
                     <span className={`font-bold ${
-                      selectedCategory.spent + parseFloat(amountStr || '0') > selectedCategory.allocatedBudget
+                      selectedCategory.spent + parseFloat(amountStr || '0') - (initialExpense && initialExpense.categoryId === selectedCategory.id ? initialExpense.amount : 0) > selectedCategory.allocatedBudget
                         ? 'text-rose-600'
                         : 'text-slate-700'
                     }`}>
-                      {formatRupiah(selectedCategory.allocatedBudget - (selectedCategory.spent + parseFloat(amountStr || '0')))}
+                      {formatRupiah(selectedCategory.allocatedBudget - (selectedCategory.spent + parseFloat(amountStr || '0') - (initialExpense && initialExpense.categoryId === selectedCategory.id ? initialExpense.amount : 0)))}
                     </span>
                   </div>
-                  {selectedCategory.spent + parseFloat(amountStr || '0') >= selectedCategory.allocatedBudget * 0.85 && (
+                  {selectedCategory.spent + parseFloat(amountStr || '0') - (initialExpense && initialExpense.categoryId === selectedCategory.id ? initialExpense.amount : 0) >= selectedCategory.allocatedBudget * 0.85 && (
                     <div className="text-amber-600 font-semibold flex items-center gap-1 mt-1">
                       <LucideIcon name="AlertTriangle" size={12} />
                       Belanja ini akan memicu notifikasi limit anggaran!

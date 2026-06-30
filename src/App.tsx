@@ -41,6 +41,7 @@ export default function App() {
   const [isAddCatOpen, setIsAddCatOpen] = useState(false);
   const [editingCategory, setEditingCategory] = useState<BudgetCategory | null>(null);
   const [isAddExpenseOpen, setIsAddExpenseOpen] = useState(false);
+  const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
   const [selectedCatForExpense, setSelectedCatForExpense] = useState<string>('');
   const [isNotifOpen, setIsNotifOpen] = useState(false);
   const [txFilterCategory, setTxFilterCategory] = useState<string>('all');
@@ -54,7 +55,13 @@ export default function App() {
   }, [categories, activeMonth]);
 
   const currentMonthExpenses = useMemo(() => {
-    return expenses.filter(e => e.date.startsWith(activeMonth));
+    return expenses
+      .filter(e => e.date.startsWith(activeMonth))
+      .sort((a, b) => {
+        const dateCompare = b.date.localeCompare(a.date);
+        if (dateCompare !== 0) return dateCompare;
+        return b.id.localeCompare(a.id);
+      });
   }, [expenses, activeMonth]);
 
   // --- Deletion Dialog State ---
@@ -185,9 +192,10 @@ export default function App() {
   // --- Add or edit custom category (pos anggaran) ---
   const copyPreviousMonthCategories = async () => {
     // Determine previous month string
-    const date = new Date(`${activeMonth}-01T00:00:00`);
+    const [year, month] = activeMonth.split('-').map(Number);
+    const date = new Date(year, month - 1, 1);
     date.setMonth(date.getMonth() - 1);
-    const prevMonthStr = date.toISOString().substring(0, 7);
+    const prevMonthStr = `${date.getFullYear()}-${(date.getMonth() + 1).toString().padStart(2, '0')}`;
     
     // Find categories from prev month or default (without month)
     let prevCats = categories.filter(c => c.month === prevMonthStr);
@@ -223,9 +231,10 @@ export default function App() {
 
   const copyNextMonthCategories = async () => {
     // Determine next month string
-    const date = new Date(`${activeMonth}-01T00:00:00`);
+    const [year, month] = activeMonth.split('-').map(Number);
+    const date = new Date(year, month - 1, 1);
     date.setMonth(date.getMonth() + 1);
-    const nextMonthStr = date.toISOString().substring(0, 7);
+    const nextMonthStr = `${date.getFullYear()}-${(date.getMonth() + 1).toString().padStart(2, '0')}`;
     
     // Check if next month already has categories
     if (categories.some(c => c.month === nextMonthStr)) {
@@ -468,6 +477,67 @@ export default function App() {
     }
   };
 
+  const handleEditExpense = (expense: Expense) => {
+    setEditingExpense(expense);
+    setIsAddExpenseOpen(true);
+  };
+
+  const handleUpdateExpense = async (expenseId: string, categoryId: string, amount: number, description: string, date: string) => {
+    const oldExpense = expenses.find(e => e.id === expenseId);
+    if (!oldExpense) return;
+
+    const oldAmount = oldExpense.amount;
+    const oldCategoryId = oldExpense.categoryId;
+
+    const updatedExpense: Expense = {
+      ...oldExpense,
+      categoryId,
+      amount,
+      description,
+      date
+    };
+
+    const updatedExpenses = expenses.map(e => e.id === expenseId ? updatedExpense : e);
+
+    // Recalculate spent values across categories
+    const updatedCats = categories.map((cat) => {
+      let spentVal = cat.spent;
+      if (cat.id === oldCategoryId) {
+        spentVal = Math.max(0, spentVal - oldAmount);
+      }
+      if (cat.id === categoryId) {
+        spentVal = spentVal + amount;
+      }
+      return { ...cat, spent: spentVal };
+    });
+
+    const updatedAlerts = checkBudgetLimits(updatedCats);
+
+    setExpenses(updatedExpenses);
+    setCategories(updatedCats);
+    setNotifications(updatedAlerts);
+    saveToStorage(updatedCats, updatedExpenses, updatedAlerts);
+
+    try {
+      await saveExpense(updatedExpense);
+      if (oldCategoryId !== categoryId) {
+        const updatedOldCat = updatedCats.find(c => c.id === oldCategoryId);
+        if (updatedOldCat) {
+          await saveCategory(updatedOldCat);
+        }
+      }
+      const updatedNewCat = updatedCats.find(c => c.id === categoryId);
+      if (updatedNewCat) {
+        await saveCategory(updatedNewCat);
+      }
+      await saveNotifications(updatedAlerts);
+    } catch (e) {
+      console.error("Firebase sync error during update expense:", e);
+    }
+
+    setEditingExpense(null);
+  };
+
   // --- Remove a specific transaction ---
   const handleDeleteExpense = (expenseId: string) => {
     const expenseToDelete = expenses.find(e => e.id === expenseId);
@@ -510,6 +580,7 @@ export default function App() {
           setNotifications(JSON.parse(storedNotifs));
         }
       }
+      throw error;
     }
   };
 
@@ -875,7 +946,7 @@ export default function App() {
                     </select>
                     <button
                       onClick={() => {
-                        setSelectedCatForExpense('');
+                        setSelectedCatForExpense(txFilterCategory === 'all' ? '' : txFilterCategory);
                         setIsAddExpenseOpen(true);
                       }}
                       className="inline-flex items-center gap-1 bg-blue-600 hover:bg-blue-700 text-white text-[11px] sm:text-xs font-bold py-1.5 px-2.5 rounded-xl transition-all shadow-md shrink-0"
@@ -934,6 +1005,13 @@ export default function App() {
                               <span className="text-xs font-black text-slate-800">
                                 -{formatRupiah(exp.amount)}
                               </span>
+                              <button
+                                onClick={() => handleEditExpense(exp)}
+                                className="text-slate-300 hover:text-blue-500 p-1.5 rounded-lg hover:bg-slate-50 transition-colors"
+                                title="Ubah catatan"
+                              >
+                                <LucideIcon name="Pencil" size={14} />
+                              </button>
                               <button
                                 onClick={() => handleDeleteExpense(exp.id)}
                                 className="text-slate-300 hover:text-rose-500 p-1.5 rounded-lg hover:bg-slate-50 transition-colors"
@@ -1054,10 +1132,15 @@ export default function App() {
 
       <ExpenseModal
         isOpen={isAddExpenseOpen}
-        onClose={() => setIsAddExpenseOpen(false)}
+        onClose={() => {
+          setIsAddExpenseOpen(false);
+          setEditingExpense(null);
+        }}
         categories={currentMonthCategories}
         preSelectedCategoryId={selectedCatForExpense}
         onAddExpense={handleAddExpense}
+        onUpdateExpense={handleUpdateExpense}
+        initialExpense={editingExpense}
       />
 
       {/* Custom Sleek Confirmation Modal */}

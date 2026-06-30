@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'motion/react';
-import { GoogleGenAI } from '@google/genai';
 import Markdown from 'react-markdown';
 import { BudgetCategory, Expense } from '../types';
 import { formatRupiah } from '../utils/budgetHelpers';
@@ -21,6 +20,11 @@ export default function AiAnalysisPanel({ categories, expenses }: AiAnalysisPane
     const savedKey = localStorage.getItem('user_gemini_api_key');
     if (savedKey) {
       setApiKey(savedKey);
+    } else {
+      const envKey = ((import.meta as any).env?.VITE_GEMINI_API_KEY || '') as string;
+      if (envKey) {
+        setApiKey(envKey);
+      }
     }
   }, []);
 
@@ -40,8 +44,6 @@ export default function AiAnalysisPanel({ categories, expenses }: AiAnalysisPane
     setAnalysisResult('');
 
     try {
-      const ai = new GoogleGenAI({ apiKey });
-      
       const summaryData = {
         totalBudget: categories.reduce((sum, cat) => sum + cat.allocatedBudget, 0),
         totalSpent: categories.reduce((sum, cat) => sum + cat.spent, 0),
@@ -74,15 +76,70 @@ Berikan:
 3. 2-3 Tips praktis untuk bulan ini.
 `;
 
-      const response = await ai.models.generateContent({
-        model: 'gemini-2.5-flash',
-        contents: prompt,
-      });
+      let response;
+      let modelUsed = '';
+      let requestErrorMsg = '';
+      const modelsToTry = [
+        'gemini-3.5-flash',
+        'gemini-3.1-flash-lite',
+        'gemini-3.1-pro-preview'
+      ];
 
-      setAnalysisResult(response.text || 'Tidak ada analisis yang dapat dihasilkan.');
+      for (const model of modelsToTry) {
+        try {
+          response = await fetch(
+            `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
+            {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                contents: [
+                  {
+                    parts: [
+                      {
+                        text: prompt,
+                      },
+                    ],
+                  },
+                ],
+              }),
+            }
+          );
+
+          if (response.ok) {
+            modelUsed = model;
+            break;
+          } else {
+            const errData = await response.json().catch(() => ({}));
+            requestErrorMsg = errData?.error?.message || `Status HTTP: ${response.status}`;
+            console.warn(`Model ${model} gagal: ${requestErrorMsg}`);
+          }
+        } catch (err: any) {
+          requestErrorMsg = err?.message || String(err);
+          console.warn(`Gagal menghubungi model ${model}: ${requestErrorMsg}`);
+        }
+      }
+
+      if (!response || !response.ok) {
+        let userFriendlyMsg = requestErrorMsg || 'Gagal menghubungi server Gemini.';
+        if (
+          userFriendlyMsg.toLowerCase().includes('permission') || 
+          userFriendlyMsg.toLowerCase().includes('caller') || 
+          userFriendlyMsg.toLowerCase().includes('api key')
+        ) {
+          userFriendlyMsg = 'Izin Ditolak (The caller does not have permission). Pastikan API Key Gemini yang Anda masukkan valid, aktif, memiliki kuota gratis/berbayar, dan memiliki akses untuk model Generative Language.';
+        }
+        throw new Error(userFriendlyMsg);
+      }
+
+      const data = await response.json();
+      const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
+      setAnalysisResult(text || 'Tidak ada analisis yang dapat dihasilkan.');
     } catch (err: any) {
       console.error(err);
-      setError('Gagal menghasilkan analisis. Periksa koneksi internet atau validitas API Key Anda.');
+      setError(err.message || 'Gagal menghasilkan analisis. Periksa koneksi internet atau validitas API Key Anda.');
     } finally {
       setIsAnalyzing(false);
     }

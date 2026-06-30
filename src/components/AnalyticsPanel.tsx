@@ -33,23 +33,29 @@ export default function AnalyticsPanel({ categories, expenses }: AnalyticsPanelP
 
   // Aggregate data for spending breakdown (pie chart)
   const pieChartData = useMemo(() => {
+    const DISTINCT_PALETTE = [
+      '#2563eb', // Royal Blue
+      '#10b981', // Emerald Green
+      '#f59e0b', // Amber Orange
+      '#ef4444', // Coral Red
+      '#8b5cf6', // Violet Purple
+      '#06b6d4', // Bright Cyan
+      '#ec4899', // Bubblegum Pink
+      '#14b8a6', // Deep Teal
+      '#f97316', // Warm Orange
+      '#eab308', // Sunflower Yellow
+      '#6366f1', // Indigo Blue
+      '#a855f7', // Magenta Purple
+      '#059669', // Forest Green
+      '#db2777', // Hot Pink
+    ];
+
     return categories
       .filter((cat) => cat.spent > 0)
-      .map((cat) => ({
+      .map((cat, index) => ({
         name: cat.name,
         value: cat.spent,
-        colorHex:
-          cat.color === 'emerald'
-            ? '#10b981'
-            : cat.color === 'blue'
-            ? '#3b82f6'
-            : cat.color === 'amber'
-            ? '#f59e0b'
-            : cat.color === 'rose'
-            ? '#ef4444'
-            : cat.color === 'purple'
-            ? '#a855f7'
-            : '#64748b'
+        colorHex: DISTINCT_PALETTE[index % DISTINCT_PALETTE.length]
       }));
   }, [categories]);
 

@@ -29,7 +29,15 @@ import {
   Share2,
   HelpCircle,
   SmartphoneIcon,
-  Laptop
+  Laptop,
+  ChevronLeft,
+  ChevronRight,
+  Copy,
+  Edit2,
+  Pencil,
+  Loader2,
+  Bot,
+  AlertCircle
 } from 'lucide-react';
 
 const iconMap: Record<string, any> = {
@@ -63,7 +71,15 @@ const iconMap: Record<string, any> = {
   Share2,
   HelpCircle,
   SmartphoneIcon,
-  Laptop
+  Laptop,
+  ChevronLeft,
+  ChevronRight,
+  Copy,
+  Edit2,
+  Pencil,
+  Loader2,
+  Bot,
+  AlertCircle
 };
 
 interface LucideIconProps {
