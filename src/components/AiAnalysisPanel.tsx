@@ -89,46 +89,62 @@ Berikan:
 
       for (const model of modelsToTry) {
         try {
-          let url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`;
-          const headers: Record<string, string> = {
-            'Content-Type': 'application/json',
-          };
-
-          // Deteksi tipe token: Jika diawali AIzaSy maka gunakan query parameter ?key=
-          // Jika tidak, asumsikan itu adalah OAuth Access Token / Bearer Token (seperti AQ. atau ya29.)
           const trimmedKey = apiKey.trim();
-          if (trimmedKey.startsWith('AIzaSy')) {
-            url += `?key=${trimmedKey}`;
-          } else {
-            headers['Authorization'] = `Bearer ${trimmedKey}`;
-          }
+          let success = false;
 
-          response = await fetch(
-            url,
-            {
-              method: 'POST',
-              headers: headers,
-              body: JSON.stringify({
-                contents: [
-                  {
-                    parts: [
-                      {
-                        text: prompt,
-                      },
-                    ],
-                  },
-                ],
-              }),
-            }
-          );
+          // Metode 1: Coba sebagai API Key (?key=...)
+          let urlWithKey = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${trimmedKey}`;
+          response = await fetch(urlWithKey, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              contents: [{ parts: [{ text: prompt }] }]
+            })
+          });
 
           if (response.ok) {
             modelUsed = model;
-            break;
+            success = true;
           } else {
             const errData = await response.json().catch(() => ({}));
             requestErrorMsg = errData?.error?.message || `Status HTTP: ${response.status}`;
-            console.warn(`Model ${model} gagal: ${requestErrorMsg}`);
+            console.warn(`Model ${model} gagal dengan metode API Key: ${requestErrorMsg}`);
+
+            // Jika gagal karena masalah otentikasi (seperti butuh OAuth token),
+            // atau jika key memang bukan API Key biasa, coba Metode 2: Bearer Token
+            if (
+              requestErrorMsg.toLowerCase().includes('oauth') ||
+              requestErrorMsg.toLowerCase().includes('credential') ||
+              requestErrorMsg.toLowerCase().includes('key') ||
+              !trimmedKey.startsWith('AIzaSy')
+            ) {
+              console.log(`Mencoba model ${model} dengan metode Bearer Token...`);
+              let urlBearer = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`;
+              const responseBearer = await fetch(urlBearer, {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                  'Authorization': `Bearer ${trimmedKey}`
+                },
+                body: JSON.stringify({
+                  contents: [{ parts: [{ text: prompt }] }]
+                })
+              });
+
+              if (responseBearer.ok) {
+                response = responseBearer;
+                modelUsed = model;
+                success = true;
+              } else {
+                const errDataBearer = await responseBearer.json().catch(() => ({}));
+                requestErrorMsg = errDataBearer?.error?.message || `Status HTTP: ${responseBearer.status}`;
+                console.warn(`Model ${model} gagal dengan metode Bearer Token: ${requestErrorMsg}`);
+              }
+            }
+          }
+
+          if (success) {
+            break;
           }
         } catch (err: any) {
           requestErrorMsg = err?.message || String(err);
